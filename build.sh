@@ -34,20 +34,20 @@ find ./crypto -name '*.ko' | xargs -I {} cp {} ./out/modules/
 #cp crypto/tcrypt.ko out/modules/tcrypt.ko
 #cp drivers/net/usb/raw_ip_net.ko out/modules/raw_ip_net.ko
 
-#cp -r out/* ~/smb/kernel/out/
-#echo 'done'
-#echo ''
+cp -r out/* ~/tab3/anykernel_packing/
+echo 'done'
+echo ''
 if [ -a arch/arm/boot/zImage ]; then
-#echo '#############'
-#echo 'Making Anykernel zip'
-#echo '#############'
-#echo ''
-#cd ~/smb/kernel/out/
-#. pack_cwm.sh
-#if [[ $1 = -d ]]; then
-#cp "$zipname" ~/Dropbox/Android/kernel/"$zipname"
-#echo "Copying $zipname to Dropbox"
-#fi
+echo '#############'
+echo 'Making Anykernel zip'
+echo '#############'
+echo ''
+cd ~/tab3/anykernel_packing
+. pack_cwm.sh
+if [[ $1 = -d ]]; then
+cp ~/tab3/out/"$zipname" ~/Dropbox/Android/SGT3/stock_kk/"$zipname"
+echo "Copying $zipname to Dropbox"
+fi
 cd $local_dir
 echo ''
 echo '#############'
