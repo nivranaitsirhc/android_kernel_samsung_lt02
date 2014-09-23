@@ -2328,7 +2328,7 @@ static int __devinit pxa168fb_probe(struct platform_device *pdev)
 	}
 	irq_mask_set(fbi->id, irq_mask, irq_enable_value);
 
-	fbi->wait_vsync = 1;
+	fbi->wait_vsync = 0;
 
 	pm_runtime_put_sync(&pdev->dev);
 
