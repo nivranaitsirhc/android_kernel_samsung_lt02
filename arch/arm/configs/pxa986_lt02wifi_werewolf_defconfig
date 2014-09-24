@@ -2895,6 +2895,7 @@ CONFIG_KSWAPD_NOSWAP=y
 # Workarounds
 #
 CONFIG_IGNORE_LPM=y
+CONFIG_DISABLE_REBOOT_RECOVERY=y
 
 #
 # Board specific configs

@@ -3010,7 +3010,11 @@ static int reboot_notifier_func(struct notifier_block *this,
 {
 	unsigned char data;
 	pr_info("reboot notifier...\n");
+#if defined(CONFIG_DISABLE_REBOOT_RECOVERY)
+	if (cmd && (0 == strcmp(cmd, "force_recovery"))) {
+#else
 	if (cmd && (0 == strcmp(cmd, "recovery"))) {
+#endif
 		pr_info("Enter recovery mode\n");
 		data = pm800_extern_read(PM80X_BASE_PAGE, 0xef);
 		pm800_extern_write(PM80X_BASE_PAGE,

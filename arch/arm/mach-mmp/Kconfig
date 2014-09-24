@@ -269,6 +269,14 @@ config CORESIGHT_SUPPORT
 	help
 	  Enables support save/restore coresight setting when enter/exit LPM.
 
+config DISABLE_REBOOT_RECOVERY
+	bool "Disable reboot into recovery"
+	help
+	  Disables reboot into recovery feature, so we don't get stuck in recovery
+	  running the new KK bootloader. Recovery is now only accessible by pressing
+	  HOME, VOL UP and POWER at the same time from a powered off state.
+	  This, however, can be overridden by using 'reboot force_recovery' "
+
 choice
 	prompt "Support dynamic CPU Hotplug"
 	depends on HOTPLUG_CPU
