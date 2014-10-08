@@ -11,8 +11,6 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/workqueue.h>
-#include <linux/power_supply.h>
-#include <linux/battery/sec_charging_common.h>
 
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -51,6 +49,7 @@ enum POWER_LUT_LEVEL {
 };
 
 static void auto_brightness_work(struct work_struct *work);
+
 struct Vx5b3d_backlight_value {
 	const unsigned int max;
 	const unsigned int mid;
@@ -77,6 +76,7 @@ typedef struct Vx5d3b_cabc_info {
 	unsigned int			power_lut_idx;
 	unsigned int			vee_strenght;
 	unsigned int			prevee_strenght;
+	unsigned int			first_count;
 	unsigned int			lcd_panel;
 	int				recovery_mode;
 	unsigned int			lvds_clk;
@@ -85,7 +85,6 @@ typedef struct Vx5d3b_cabc_info {
 	int				lvds_clk_switching;
 	int				value;
 	int 				skip_init;
-	int				backlight_off;
 };
 
 static struct Vx5b3d_backlight_value backlight_table[5] = {
@@ -139,7 +138,6 @@ static struct Vx5b3d_backlight_value backlight_table[5] = {
 #define LOW_BRIGHTNESS_LEVEL		20
 #define DIM_BRIGHTNESS_LEVEL		19
 #define LOW_BATTERY_LEVEL		10
-#define	BATTERY_CAPACITY_LEVEL		5
 #define MINIMUM_VISIBILITY_LEVEL	30
 #define DEFAULT_BRIGHTNESS		MID_BRIGHTNESS_LEVEL
 #define LVDS_CLK_48P19Mhz		0
@@ -153,7 +151,7 @@ struct Vx5d3b_cabc_info *g_vx5d3b = NULL;
 struct pxa168fb_info *fbi_global = NULL;
 static int dsi_init(struct pxa168fb_info *fbi);
 static int lt02_update_brightness(struct Vx5d3b_cabc_info *g_vx5d3b);
-static void lt02_wakeup_brightness(void);
+
 #endif
 
 /*
@@ -239,7 +237,6 @@ static struct pxa168fb_mach_info mipi_lcd_info = {
 	.phy_type = DSI2DPI,
 	.phy_init = dsi_init,
 	.phy_info = &dsiinfo,
-	.backlight_wakeup = lt02_wakeup_brightness,
 };
 
 static struct pxa168fb_mach_info mipi_lcd_ovly_info = {
@@ -290,7 +287,7 @@ static int dsi_init(struct pxa168fb_info *fbi)
 
 	/*  reset the bridge */
 	if (mi->xcvr_reset && !fbi->skip_pw_on) {
-		mi->xcvr_reset();
+		mi->xcvr_reset(fbi);
 	}
 
 	/* set dsi to dpi conversion chip */
@@ -810,57 +807,14 @@ static struct device_attribute mdnie_attributes[] = {
 	__ATTR_NULL,
 };
 
-
-static int tc358765_reset(void)
+void vx5b3dx_backlightReg_off(void)
 {
-	int gpio;
-
-#if defined(CONFIG_MACH_EMEIDKB) || defined(CONFIG_MACH_LT02) || defined(CONFIG_MACH_COCOA7)
-	gpio = mfp_to_gpio(GPIO018_GPIO_18);
-#endif
-	if (gpio_request(gpio, "mipi bridge reset")) {
-		pr_info("gpio %d request failed\n", gpio);
-		return -1;
-	}
-
-	gpio_direction_output(gpio, 0);
-	udelay(10);
-	gpio_direction_output(gpio, 1);
-	udelay(10);
-
-	gpio_free(gpio);
-	pr_info("tc358765_reset\n");
-
-	return 0;
-
-}
-
-static void vx5b3dx_backlightReg_off(void)
-{
-	unsigned int  lcd_internal_ldo_en = 0, v_sys_lcd = 0;
-
-	lcd_internal_ldo_en = mfp_to_gpio(GPIO097_GPIO_97);
-	v_sys_lcd = mfp_to_gpio(GPIO098_GPIO_98);
-
-	if (gpio_request(lcd_internal_ldo_en, "lcd internal ldo en"))
-		pr_err("gpio %d request failed\n", lcd_internal_ldo_en);
-
-	if (gpio_request(v_sys_lcd, "lcd sys lcd"))
-		pr_err("gpio %d request failed\n", v_sys_lcd);
-
 	tc35876x_write32(0x164, 0x0);
 	mdelay(1);
 	tc35876x_write32(0x15c, 0x0);
-
-	gpio_direction_output(lcd_internal_ldo_en, 0);
-	gpio_direction_output(v_sys_lcd, 0);
-	mdelay(1);
-
-	gpio_free(lcd_internal_ldo_en);
-	gpio_free(v_sys_lcd);
 }
 
-static void vx5b3dx_backlightReg_on(void)
+void vx5b3dx_backlightReg_on(void)
 {
 	struct Vx5d3b_cabc_info *vx5d3b = g_vx5d3b;
 	unsigned int  lcd_internal_ldo_en = 0, v_sys_lcd = 0;
@@ -901,15 +855,6 @@ static void vx5b3dx_backlightReg_on(void)
 	gpio_free(v_sys_lcd);
 	
 }
-
-static void lt02_wakeup_brightness(void)
-{
-	struct Vx5d3b_cabc_info *vx5d3b = g_vx5d3b;
-
-	if (fbi_global->active)
-		lt02_update_brightness(vx5d3b);
-}
-
 static int lt02_set_brightness(struct backlight_device *bd)
 {
 	struct Vx5d3b_cabc_info *vx5d3b = g_vx5d3b;
@@ -919,16 +864,6 @@ static int lt02_set_brightness(struct backlight_device *bd)
 		lt02_update_brightness(vx5d3b);
 	
 	return ret;
-}
-
-static int get_battery_level(void)
-{
-	union power_supply_propval val;
-
-	psy_do_property("sec-fuelgauge", get,
-		POWER_SUPPLY_PROP_CAPACITY, val);
-
-	return val.intval;
 }
 
 static int lt02_update_brightness(struct Vx5d3b_cabc_info *g_vx5d3b)
@@ -965,12 +900,7 @@ static int lt02_update_brightness(struct Vx5d3b_cabc_info *g_vx5d3b)
 	if (brightness > MAX_BRIGHTNESS_LEVEL)
 		brightness = MAX_BRIGHTNESS_LEVEL;
 
-	/* Outgoing Quality Control Group issue
-	 * Brightness inversion is applied when battery level is <= 5%
-	 * i.e. low battery condition.
-	 */
-	if (brightness == LOW_BATTERY_LEVEL &&
-			get_battery_level() <= BATTERY_CAPACITY_LEVEL)
+	if (brightness == LOW_BATTERY_LEVEL)/*Outgoing Quality Control Group issue*/
 		brightness = MINIMUM_VISIBILITY_LEVEL;
 
 	if (brightness >= MID_BRIGHTNESS_LEVEL) {
@@ -1031,36 +961,26 @@ static int lt02_update_brightness(struct Vx5d3b_cabc_info *g_vx5d3b)
 	else	/*Default for 48.2Mhz*/
 		g_vx5d3b->vx5b3d_backlight_frq = V5D3BX_5P9KHZ_DEFAULT_RATIO;
 
+	if ((g_vx5d3b->prevee_strenght != vee_strenght) && (brightness != 0))
+		ret |= tc35876x_write32(0x400,vee_strenght);
+
+	if (!g_vx5d3b->first_count)
+		ret |= tc35876x_write32(0x164,((vx5b3d_brightness * g_vx5d3b->vx5b3d_backlight_frq)/1000));
+
 	/*backlight duty ration control when device is first backlight on.*/
-	if (g_vx5d3b->backlight_off && brightness != 0) {
-		printk("backlight control Reg On...[%d]\n", brightness);
+	if (g_vx5d3b->first_count && brightness != 0) {
+		printk("backlight control first...[%d] \n",brightness);
 		vx5b3dx_backlightReg_on();
-		g_vx5d3b->backlight_off = false;
+		ret |= tc35876x_write32(0x164,((vx5b3d_brightness * g_vx5d3b->vx5b3d_backlight_frq)/1000));
+		g_vx5d3b->first_count = false;
 	}
-
-	if ((g_vx5d3b->prevee_strenght != vee_strenght) && (brightness != 0)) {
-		ret |= tc35876x_write32(0x400, vee_strenght);
-		if (ret < 0)
-			pr_info("tc35876x_i2c_write fail [%d] brightness..[%d]!",
-				ret, brightness);
-	}
-
-	ret |= tc35876x_write32(0x164, ((vx5b3d_brightness * g_vx5d3b->vx5b3d_backlight_frq)/1000));
-	if (ret < 0)
-		pr_info("tc35876x_i2c_write fail [%d] brightness..[%d]!\n",
-			ret, brightness);
 
 	g_vx5d3b->prevee_strenght = vee_strenght;
 
-	if (!g_vx5d3b->backlight_off && brightness == 0) {
-		printk("backlight control Reg Off...[%d]\n", brightness);
-		vx5b3dx_backlightReg_off();
-		g_vx5d3b->backlight_off = true;
-	}
-
 	mutex_unlock(&g_vx5d3b->pwr_lock);
 
-
+	if (ret < 0)
+		pr_info("tc35876x_i2c_write fail [%d] ! \n",ret);
 
 	return 0;
 }
@@ -1082,9 +1002,30 @@ static int lt02_lcd_power(struct pxa168fb_info *fbi,
 {
 	struct Vx5d3b_cabc_info *vx5d3b = g_vx5d3b;
 	static struct regulator *lvds1_1p2 = NULL,*lvds1_1p8 = NULL,*lvds1_3p3 = NULL;
+	unsigned int  lcd_lvds_rst = 0,lcd_internal_ldo_en = 0, v_sys_lcd = 0;
 
 	if (fbi_global == NULL)
 		fbi_global = fbi;
+
+
+	lcd_internal_ldo_en = mfp_to_gpio(GPIO097_GPIO_97);
+	v_sys_lcd = mfp_to_gpio(GPIO098_GPIO_98);
+	lcd_lvds_rst = mfp_to_gpio(GPIO018_GPIO_18);
+
+	if (gpio_request(lcd_internal_ldo_en, "lcd internal ldo en")) {
+		pr_err("gpio %d request failed\n", lcd_internal_ldo_en);
+		goto regu_lcd_vdd;
+	}
+
+	if (gpio_request(v_sys_lcd, "lcd sys lcd")) {
+		pr_err("gpio %d request failed\n", v_sys_lcd);
+		goto regu_lcd_vdd;
+	}
+
+	if (gpio_request(lcd_lvds_rst, "lcd_lvds_rst")) {
+		pr_err("gpio %d request failed\n", lcd_lvds_rst);
+		goto regu_lcd_vdd;
+	}
 
 	if (!lvds1_3p3) {
 		lvds1_3p3 = regulator_get(NULL, "v_ldo14_3v");
@@ -1115,45 +1056,59 @@ static int lt02_lcd_power(struct pxa168fb_info *fbi,
 	if (on) {
 
 		/*
-		MIPI bridge must power on as below sequence or at the same time
-		1.2V, to digital core
-		1.2V, to DSI-RX PHY
-		3.3V, to LVDS-TX PHY
-		1.8V or 3.3V, to digital I/Os
+			MIPI bridge must power on as below sequence or at the same time
+			1.2V, to digital core
+			1.2V, to DSI-RX PHY
+			3.3V, to LVDS-TX PHY
+			1.8V or 3.3V, to digital I/Os
 		*/
-		regulator_set_voltage(lvds1_1p8, 1800000, 1800000);
-		regulator_enable(lvds1_1p8);
-		regulator_set_voltage(lvds1_3p3, 3300000, 3300000);
-		regulator_enable(lvds1_3p3);
-		regulator_set_voltage(lvds1_1p2, 1200000, 1200000);
-		regulator_enable(lvds1_1p2);
 
-		mdelay(5);
-		/*
-		gpio_direction_output(v_sys_lcd, 1);
-		gpio_direction_output(lcd_internal_ldo_en, 1);
-		*/
-		pr_info("lt02_lcd_power on !\n");
+			regulator_set_voltage(lvds1_1p8, 1800000, 1800000);
+			regulator_enable(lvds1_1p8);
+			regulator_set_voltage(lvds1_3p3, 3300000, 3300000);
+			regulator_enable(lvds1_3p3);
+
+			regulator_set_voltage(lvds1_1p2, 1200000, 1200000);
+			regulator_enable(lvds1_1p2);
+
+			mdelay(5);
+			/*
+			gpio_direction_output(v_sys_lcd, 1);
+			gpio_direction_output(lcd_internal_ldo_en, 1);
+			*/
+			pr_info("lt02_lcd_power on !\n");
 
 	} else {
-		/* Backlight off*/
-		cancel_delayed_work(&g_vx5d3b->auto_brightness_delayed_work);
-		g_vx5d3b->prevee_strenght = 0;
-		g_vx5d3b->auto_brightness = 0;
-		if (!g_vx5d3b->skip_init)
-			g_vx5d3b->skip_init = 1;
+			/* Backlight off*/
+			cancel_delayed_work(&g_vx5d3b->auto_brightness_delayed_work);
+			g_vx5d3b->prevee_strenght = 0;
+			g_vx5d3b->auto_brightness = 0;
+			if (!g_vx5d3b->skip_init)
+				g_vx5d3b->skip_init = 1;
+			vx5b3dx_backlightReg_off();
 
-		regulator_disable(lvds1_3p3);
-		regulator_disable(lvds1_1p2);
-		/*Caused by i2c fail*/
-		if (system_rev >= LT02_R0_4)
+			msleep(200);
+			/*mipi signal off*/
+			gpio_direction_output(lcd_lvds_rst, 0);
+			msleep(1);
+			gpio_direction_output(lcd_internal_ldo_en, 0);
+			gpio_direction_output(v_sys_lcd, 0);
+
+			regulator_disable(lvds1_3p3);
+			regulator_disable(lvds1_1p2);
+			/*Caused by i2c fail*/
+			if (system_rev >= LT02_R0_4)
 			regulator_disable(lvds1_1p8);
 
-		pr_info("lt02_lcd_power off !\n");
-		msleep(200);
+			pr_info("lt02_lcd_power off !\n");
+			msleep(200);
 	}
 
 	mutex_unlock(&vx5d3b->pwr_lock);
+
+	gpio_free(lcd_internal_ldo_en);
+	gpio_free(lcd_lvds_rst);
+	gpio_free(v_sys_lcd);
 
 	pr_debug("%s on %d\n", __func__, on);
 
@@ -1168,7 +1123,35 @@ regu_lcd_vdd:
 	regulator_put(lvds1_1p8);
 	regulator_put(lvds1_3p3);
 
+	gpio_free(lcd_internal_ldo_en);
+	gpio_free(lcd_lvds_rst);
+	gpio_free(v_sys_lcd);
+
 	return -EIO;
+}
+
+static int tc358765_reset(struct pxa168fb_info *fbi)
+{
+	int gpio;
+
+#if defined(CONFIG_MACH_EMEIDKB) || defined(CONFIG_MACH_LT02) || defined(CONFIG_MACH_COCOA7)
+	gpio = mfp_to_gpio(GPIO018_GPIO_18);
+#endif
+	if (gpio_request(gpio, "mipi bridge reset")) {
+		pr_info("gpio %d request failed\n", gpio);
+		return -1;
+	}
+
+	gpio_direction_output(gpio, 0);
+	udelay(10);
+	gpio_direction_output(gpio, 1);
+	udelay(10);
+
+	gpio_free(gpio);
+	pr_info("tc358765_reset\n");
+
+	return 0;
+
 }
 
 static void tc358765_dump(void)
@@ -1406,7 +1389,11 @@ static int dsi_set_tc358765(struct pxa168fb_info *fbi)
 	/* put all lanes to LP-11 state  */
 	dsi_lanes_enable(fbi, 1);
 
+	g_vx5d3b->first_count = true;
+
 	mutex_unlock(&vx5d3b->pwr_lock);
+
+	lt02_update_brightness(g_vx5d3b);
 
 	pr_info("VX5B3D ..END.....\n");
 	return 0;
@@ -1484,7 +1471,7 @@ void __init lt02_add_lcd_mipi(void)
 	vx5d3bInfo->vee_strenght = V5D3BX_VEEDEFAULTVAL;
 	vx5d3bInfo->prevee_strenght = 1;
 	vx5d3bInfo->auto_brightness = false;
-	vx5d3bInfo->backlight_off = true;
+	vx5d3bInfo->first_count = false;
 	vx5d3bInfo->lcd_panel = panel_id;
 	vx5d3bInfo->vee_lightValue = &backlight_table[vx5d3bInfo->lcd_panel];
 	vx5d3bInfo->lvds_clk = LVDS_CLK_48P19Mhz;
