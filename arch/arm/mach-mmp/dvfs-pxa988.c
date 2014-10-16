@@ -520,8 +520,8 @@ static struct dvfs_rail_component vm_rail_comp_tbl_z1z2[VM_RAIL_MAX] = {
 static unsigned long freqs_cmb_z3[VM_RAIL_MAX][VL_MAX] = {
 	{ 312000, 624000, 1066000, 1344000 },	/* CORE */
 	{ 312000, 312000, 533000, 533000 },	/* DDR/AXI */
-	{ 0	, 416000, 624000, 624000 },	/* GC */
-	{ 208000, 312000, 416000, 416000 }	/* VPU */
+	{ 0	, 416000, 624000, 624000, 702000 },	/* GC */
+	{ 208000, 312000, 416000, 624000 }	/* VPU */
 };
 
 static struct dvfs_rail_component vm_rail_comp_tbl_z3[VM_RAIL_MAX] = {
@@ -538,8 +538,8 @@ static struct dvfs_rail_component vm_rail_comp_tbl_z3[VM_RAIL_MAX] = {
 static unsigned long freqs_cmb_ax[VM_RAIL_MAX][VL_MAX] = {
 	{ 624000, 624000, 1066000, 1344000 },	/* CORE */
 	{ 312000, 312000, 312000, 533000 },	/* DDR/AXI */
-	{ 0, 416000, 624000, 624000 },	/* GC */
-	{ 0, 312000, 416000, 416000 }	/* VPU */
+	{ 0, 416000, 624000, 624000, 702000 },	/* GC */
+	{ 0, 312000, 416000, 624000 }	/* VPU */
 };
 
 static struct dvfs_rail_component vm_rail_comp_tbl_ax[VM_RAIL_MAX] = {
@@ -683,8 +683,8 @@ static struct dvfs_rail pxa988_dvfs_rail_apsub_sleep = {
 static unsigned long component_freqs[VM_RAIL_MAX][MAX_FREQ_NUM] = {
 	{ 312000, 624000, 1066000, 1344000 },		/* CORE */
 	{ 156000, 312000, 533000 },			/* DDR/AXI */
-	{ 156000, 312000, 416000, 624000 },		/* GC */
-	{ 156000, 208000, 312000, 416000 }		/* VPU */
+	{ 156000, 312000, 416000, 624000, 702000 },		/* GC */
+	{ 156000, 312000, 416000, 624000 }		/* VPU */
 };
 
 static unsigned int pxa988_get_freq_num(const char *name)
@@ -731,12 +731,12 @@ static int component_voltage[][MAX_RAIL_NUM][LEVEL_END] = {
 		{LEVEL0, LEVEL0, LEVEL3,}, /* APSUB idle voltage */
 		{LEVEL0, LEVEL0, LEVEL0,}, /* APSUB sleep voltage */
 	},
-		/* 156,  312,    416,    624 */
+		/* 156,  312,    416,    624,    702 */
 	[GC] = {
-		{LEVEL0, LEVEL0, LEVEL0, LEVEL1 }, /* AP Active voltage */
-		{LEVEL0, LEVEL0, LEVEL0, LEVEL1 }, /* AP LPM voltage */
-		{LEVEL0, LEVEL0, LEVEL0, LEVEL1 }, /* APSUB idle voltage */
-		{LEVEL0, LEVEL0, LEVEL0, LEVEL0 }, /* APSUB sleep voltage */
+		{LEVEL0, LEVEL0, LEVEL0, LEVEL1, LEVEL1 }, /* AP Active voltage */
+		{LEVEL0, LEVEL0, LEVEL0, LEVEL1, LEVEL1 }, /* AP LPM voltage */
+		{LEVEL0, LEVEL0, LEVEL0, LEVEL1, LEVEL1 }, /* APSUB idle voltage */
+		{LEVEL0, LEVEL0, LEVEL0, LEVEL0, LEVEL0 }, /* APSUB sleep voltage */
 	},
 		/* 156,  208,    312,    416 */
 	[VPU] = {

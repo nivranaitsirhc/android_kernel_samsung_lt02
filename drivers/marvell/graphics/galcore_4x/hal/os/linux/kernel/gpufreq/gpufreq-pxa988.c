@@ -22,7 +22,7 @@
 #endif
 
 #if MRVL_CONFIG_DEVFREQ_GOV_THROUGHPUT
-#define GPU_HIGH_THRESHOLD_4_DDR 416000
+#define GPU_HIGH_THRESHOLD_4_DDR 624000
 #define _config_state(cur_freq, old_freq, state) \
 { \
     if((cur_freq) >= GPU_HIGH_THRESHOLD_4_DDR) \
@@ -94,7 +94,8 @@ static int gpufreq_frequency_table_get(unsigned int gpu, struct gpufreq_frequenc
         GPUFREQ_SET_FREQ_TABLE(table_freqs, 1, HZ_TO_KHZ(312000000));
         GPUFREQ_SET_FREQ_TABLE(table_freqs, 2, HZ_TO_KHZ(416000000));
         GPUFREQ_SET_FREQ_TABLE(table_freqs, 3, HZ_TO_KHZ(624000000));
-        GPUFREQ_SET_FREQ_TABLE(table_freqs, 4, GPUFREQ_TABLE_END);
+        GPUFREQ_SET_FREQ_TABLE(table_freqs, 4, HZ_TO_KHZ(702000000));
+        GPUFREQ_SET_FREQ_TABLE(table_freqs, 5, GPUFREQ_TABLE_END);
         goto out;
     }
 
@@ -372,10 +373,10 @@ static int pxa988_gpufreq_target (struct gpufreq_policy *policy, unsigned int ta
         freqs.new_freq = freqs.old_freq;
         ret = -EINVAL;
     }
-    else
-    {
-        freqs.new_freq = rate;
-    }
+//    else
+//    {
+//        freqs.new_freq = rate;
+//    }
 
     _config_state(rate, freqs.old_freq, state);
 
@@ -398,6 +399,7 @@ static unsigned int pxa988_gpufreq_get (unsigned int gpu)
     }
 
     rate = clk_get_rate(gc_clk);
+    debug_log(GPUFREQ_LOG_ERROR, "clk_get_rate = %d", rate);
 
     if(rate == (unsigned int)-1)
         return -EINVAL;

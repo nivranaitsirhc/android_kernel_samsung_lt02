@@ -26,8 +26,8 @@
 #define MAX_FREQUENCY_UP_THRESHOLD          (100)
 #define MAX_RETRY_FREQUENCY_DOWN            (3)
 
-#define DEF_DESIRED_HIGH_FREQ               (HZ_TO_KHZ(312000000))
-#define USE_POLICY_POWER_BENCH              (1)
+#define DEF_DESIRED_HIGH_FREQ               (HZ_TO_KHZ(624000000))
+#define USE_POLICY_POWER_BENCH              (0)
 
 static int gpufreq_governor_ondemand(struct gpufreq_policy *policy,
                                      unsigned int event);
@@ -294,7 +294,7 @@ static void gov_policy_gpubench(struct gpufreq_ondemand_info_s *ondemand_info)
 #else
 static void gov_policy_dbs(struct gpufreq_ondemand_info_s *ondemand_info)
 {
-    int load, load_freq;
+    int load; //, load_freq;
     unsigned int gpu = ondemand_info->gpu;
     struct gpufreq_policy * cur_policy = ondemand_info->cur_policy;
     struct ondemand_tuners *ondem_tuners_ins = &ondemand_tuners_ins[gpu];

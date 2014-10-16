@@ -86,6 +86,13 @@ struct _pulseEater_frequency_table majorCoreFreq_table[] =
           },
     [4] = {
             .index     = 4,
+            .hwPeriod  = 0xF,
+            .swPeriod  = 12,
+            .hwMs      = 32,
+            .frequency = 702000,
+          },
+    [5] = {
+            .index     = 5,
             .hwPeriod  = 0,
             .swPeriod  = 0,
             .hwMs      = 0,
@@ -114,6 +121,12 @@ struct _pulseEater_frequency_table TwoDCoreFreq_table[] =
             .frequency = 416000,
           },
     [3] = {
+            .index     = 3,
+            .hwPeriod  = 0xF,
+            .swPeriod  = 12,
+            .frequency = 624000,
+          },
+    [4] = {
             .index     = 4,
             .hwPeriod  = 0,
             .swPeriod  = 0,
@@ -1330,8 +1343,8 @@ gckHARDWARE_Construct(
                 j++;
             }
         }
-        hardware->freq      = 416000;
-        hardware->hwPeriod  = 0xE;
+        hardware->freq      = 624000;
+        hardware->hwPeriod  = 0xF;
         hardware->sfPeriod  = gcdPulseEaterPeriode;
 
         gcmkONERROR(gckOS_CreateMutex(Os, &hardware->pulseEaterMutex));

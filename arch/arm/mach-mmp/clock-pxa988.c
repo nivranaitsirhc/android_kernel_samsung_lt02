@@ -1529,6 +1529,7 @@ static struct periph_clk_tbl gc_aclk_tbl[] = {
 	{.clk_rate = 312000000, .parent = &pll1_624},
 	{.clk_rate = 400000000, .parent = &pll2p},
 	{.clk_rate = 416000000, .parent = &pll1_416},
+	{.clk_rate = 624000000, .parent = &pll1_624},
 };
 
 static void gc_aclk_init(struct clk *clk)
@@ -1670,6 +1671,11 @@ static struct periph_clk_tbl gc_fclk_tbl[] = {
 		.parent = &pll1_624,
 		.comclk_rate = 416000000,
 	},
+	{
+		.clk_rate = 702000000,
+		.parent = &pll1_624,
+		.comclk_rate = 416000000,
+	},
 };
 
 /* interface used by GC driver to get avaliable GC frequencies, unit HZ */
@@ -1718,7 +1724,7 @@ static void gc_clk_init(struct clk *clk)
 		__clk_periph_init(clk, &pll2, 4, 1);
 	else
 		/* default GC fclk = 416M sel = pll1_416, div = 1 */
-		__clk_periph_init(clk, &pll1_416, 1, 1);
+		__clk_periph_init(clk, &pll1_624, 1, 1);
 
 
 #ifdef CONFIG_DEBUG_FS
@@ -1886,6 +1892,7 @@ static struct periph_clk_tbl vpu_aclk_tbl[] = {
 	{.clk_rate = 312000000, .parent = &pll1_624},
 	{.clk_rate = 400000000, .parent = &pll2p},
 	{.clk_rate = 416000000, .parent = &pll1_416},
+	{.clk_rate = 624000000, .parent = &pll1_624},
 };
 
 static void vpu_aclk_init(struct clk *clk)
@@ -2028,6 +2035,11 @@ static struct periph_clk_tbl vpu_fclk_tbl[] = {
 		.clk_rate = 416000000,
 		.parent = &pll1_416,
 		.comclk_rate = 416000000
+	},
+	{
+		.clk_rate = 624000000,
+		.parent = &pll1_624,
+		.comclk_rate = 416000000,
 	},
 };
 

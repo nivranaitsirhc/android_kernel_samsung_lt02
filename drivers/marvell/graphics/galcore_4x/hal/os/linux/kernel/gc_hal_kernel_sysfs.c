@@ -514,7 +514,7 @@ static ssize_t store_clk_rate (struct device *dev,
     /* read input and verify */
     SYSFS_VERIFY_INPUT(sscanf(buf, "%d,%d", &core, &frequency), 2);
     SYSFS_VERIFY_INPUT_RANGE(core, 0, (gpu_count-1));
-    SYSFS_VERIFY_INPUT_RANGE(frequency, 156, 624);
+    SYSFS_VERIFY_INPUT_RANGE(frequency, 156, 702);
 
 #if MRVL_CONFIG_SHADER_CLK_CONTROL
     if(has_feat_gc_shader() && core == gcvCORE_SH)
