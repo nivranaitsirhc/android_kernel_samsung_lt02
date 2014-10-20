@@ -1279,7 +1279,7 @@ int gpufreq_frequency_table_gpuinfo(struct gpufreq_policy *policy,
 
     /* update max/min frequency for policy */
     policy->min = policy->gpuinfo.min_freq = min_freq;
-    policy->max = policy->gpuinfo.max_freq = 624000;  // manual override for now, max would be 702MHz
+    policy->max = policy->gpuinfo.max_freq = max_freq; //624000;  // manual override for now, max would be 702MHz
 
     /* check max/min frequecy again */
     if(min_freq == ~0)
