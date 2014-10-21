@@ -117,6 +117,7 @@ static ssize_t show_scaling_available_frequencies(struct gpufreq_policy *policy,
 {
     unsigned int i;
     unsigned int gpu = policy->gpu;
+    unsigned long freq_hz;
     struct gpufreq_frequency_table *freq_table = gh[gpu].freq_table;
     ssize_t count = 0;
 
@@ -124,8 +125,9 @@ static ssize_t show_scaling_available_frequencies(struct gpufreq_policy *policy,
     {
         if (freq_table[i].frequency == GPUFREQ_ENTRY_INVALID)
             continue;
-
-        count += sprintf(&buf[count], "%d ", freq_table[i].frequency);
+        
+        freq_hz = ( freq_table[i].frequency *1000 );
+        count += sprintf(&buf[count], "%lu ", freq_hz);
     }
 
     count += sprintf(&buf[count], "\n");

@@ -152,12 +152,14 @@ gpufreq_freq_attr_ro(gpuinfo_min_freq);
 static ssize_t show_scaling_cur_freq(struct gpufreq_policy *policy, char *buf)
 {
     unsigned int freq = ~0, gpu = 0;
+    unsigned long freq_hz;
 
     gpu = policy->gpu;
     if(gpufreq_driver->get)
         freq = gpufreq_driver->get(gpu);
 
-    return sprintf(buf, "%u\n", freq);
+    freq_hz = ( freq * 1000 );
+    return sprintf(buf, "%lu\n", freq_hz);
 }
 gpufreq_freq_attr_ro(scaling_cur_freq);
 
@@ -171,20 +173,32 @@ static ssize_t show_gputype(struct gpufreq_policy *policy, char *buf)
 gpufreq_freq_attr_ro(gputype);
 
 /* [RW] attr: scaling_max_freq */
-show_attr(scaling_max_freq, max);
+//show_attr(scaling_max_freq, max);
+
+static ssize_t show_scaling_max_freq(struct gpufreq_policy *policy, char *buf)
+{
+	unsigned long freq_hz;
+	
+	freq_hz = ( policy->max * 1000);
+    return sprintf(buf, "%lu\n", freq_hz);
+}
+
 static ssize_t store_scaling_max_freq(struct gpufreq_policy *policy, const char *buf, size_t count)
 {
     int ret = -EINVAL;
+    unsigned long freq_hz;
     struct gpufreq_policy new_policy;
 
     ret = gpufreq_get_cur_policy(&new_policy, policy->gpu);
     if(ret)
         goto err_out;
 
-    ret = sscanf(buf, "%u", &new_policy.max);
+    ret = sscanf(buf, "%lu", &freq_hz);
     if(ret != 1)
         goto err_out;
 
+    new_policy.max = ( freq_hz / 1000 );
+    
     ret = _gpufreq_set_policy(policy, &new_policy);
 
     policy->real_policy.max_freq = policy->max;
@@ -200,20 +214,31 @@ err_out:
 gpufreq_freq_attr_rw(scaling_max_freq);
 
 /* [RW] attr: scaling_min_freq */
-show_attr(scaling_min_freq, min);
+//show_attr(scaling_min_freq, min);
+
+static ssize_t show_scaling_min_freq(struct gpufreq_policy *policy, char *buf)
+{
+	unsigned long freq_hz;
+	
+	freq_hz = ( policy->min * 1000);
+    return sprintf(buf, "%lu\n", freq_hz);
+}
+
 static ssize_t store_scaling_min_freq(struct gpufreq_policy *policy, const char *buf, size_t count)
 {
     int ret = -EINVAL;
+    unsigned long freq_hz;
     struct gpufreq_policy new_policy;
 
     ret = gpufreq_get_cur_policy(&new_policy, policy->gpu);
     if(ret)
         goto err_out;
 
-    ret = sscanf(buf, "%u", &new_policy.min);
+    ret = sscanf(buf, "%lu", &freq_hz);
     if(ret != 1)
         goto err_out;
 
+    new_policy.min = ( freq_hz / 1000 );
     ret = _gpufreq_set_policy(policy, &new_policy);
 
     policy->real_policy.min_freq = policy->min;
