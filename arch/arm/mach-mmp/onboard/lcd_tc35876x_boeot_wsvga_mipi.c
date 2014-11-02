@@ -1004,6 +1004,13 @@ static int lt02_lcd_power(struct pxa168fb_info *fbi,
 	static struct regulator *lvds1_1p2 = NULL,*lvds1_1p8 = NULL,*lvds1_3p3 = NULL;
 	unsigned int  lcd_lvds_rst = 0,lcd_internal_ldo_en = 0, v_sys_lcd = 0;
 
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+	extern bool s2w_scr_suspended;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+	extern bool dt2w_scr_suspended;
+#endif
+
 	if (fbi_global == NULL)
 		fbi_global = fbi;
 
@@ -1076,6 +1083,13 @@ static int lt02_lcd_power(struct pxa168fb_info *fbi,
 			gpio_direction_output(v_sys_lcd, 1);
 			gpio_direction_output(lcd_internal_ldo_en, 1);
 			*/
+			
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+			s2w_scr_suspended = false;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+			dt2w_scr_suspended = false;
+#endif
 			pr_info("lt02_lcd_power on !\n");
 
 	} else {
@@ -1100,6 +1114,12 @@ static int lt02_lcd_power(struct pxa168fb_info *fbi,
 			if (system_rev >= LT02_R0_4)
 			regulator_disable(lvds1_1p8);
 
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+			s2w_scr_suspended = true;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+			dt2w_scr_suspended = true;
+#endif
 			pr_info("lt02_lcd_power off !\n");
 			msleep(200);
 	}

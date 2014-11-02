@@ -81,7 +81,7 @@ name = "zinitix_isp" , addr 0x50*/
 /* resolution offset */
 #define ABS_PT_OFFSET				(-1)
 
-#define TOUCH_FORCE_UPGRADE			1
+#define TOUCH_FORCE_UPGRADE			0
 #define USE_CHECKSUM				1
 #define CHECK_HWID					0
 
@@ -1751,6 +1751,7 @@ static irqreturn_t bt532_touch_irq_handler(int irq, void *data)
 
 	if (ts_read_coord(info) == false || info->touch_info.status == 0xffff
 		|| info->touch_info.status == 0x1) { /* maybe desirable reset */
+		pr_info("laufersteppenwolf: status: %d", info->touch_info.status);
 		dev_err(&client->dev, "Failed to read info coord\n");
 		bt532_power_control(info, POWER_OFF);
 		bt532_power_control(info, POWER_ON_SEQUENCE);
@@ -4024,7 +4025,7 @@ static int bt532_ts_probe(struct i2c_client *client,
 	sema_init(&info->work_lock, 1);
 
 	ret = request_threaded_irq(info->irq, NULL, bt532_touch_irq_handler,
-		IRQF_TRIGGER_FALLING | IRQF_ONESHOT , BT532_TS_DEVICE, info);
+		IRQF_TRIGGER_FALLING | IRQF_ONESHOT | IRQF_NO_SUSPEND | IRQF_EARLY_RESUME , BT532_TS_DEVICE, info);
 
 	if (ret) {
 		dev_err(&client->dev, "Unable to register irq\n");
