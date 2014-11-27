@@ -401,7 +401,7 @@ static unsigned int pxa988_gpufreq_get (unsigned int gpu)
     }
 
     rate = clk_get_rate(gc_clk);
-    debug_log(GPUFREQ_LOG_ERROR, "clk_get_rate = %d", rate);
+//    debug_log(GPUFREQ_LOG_ERROR, "clk_get_rate = %d", rate);
 
     if(rate == (unsigned int)-1)
         return -EINVAL;
