@@ -53,16 +53,16 @@ MODULE_LICENSE("GPLv2");
 
 /* Tuneables */
 #define S2W_DEBUG		0
-#define S2W_DEFAULT		1
+#define S2W_DEFAULT		0
 #define S2W_S2SONLY_DEFAULT	0
 #define S2W_PWRKEY_DUR          50
 
 #define DEFAULT_S2W_Y_MAX               1024
 #define DEFAULT_S2W_X_MAX               600
 #define DEFAULT_S2W_Y_LIMIT             DEFAULT_S2W_Y_MAX-150
-#define DEFAULT_S2W_X_B1                130
+#define DEFAULT_S2W_X_B1                80
 #define DEFAULT_S2W_X_B2                300
-#define DEFAULT_S2W_X_FINAL             130
+#define DEFAULT_S2W_X_FINAL             80
 
 /* Resources */
 int s2w_switch = S2W_DEFAULT, s2w_s2sonly = S2W_S2SONLY_DEFAULT;
