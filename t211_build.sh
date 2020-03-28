@@ -13,7 +13,7 @@ rm -rf out
 echo '#############'
 echo 'making defconfig'
 echo '#############'
-make pxa986_lt023g_werewolf_defconfig
+make pxa986_lt023g_zcainine_defconfig
 echo '#############'
 echo 'making zImage'
 echo '#############'
@@ -49,8 +49,8 @@ else
 	exit 2
 fi
 
-cp -r out/zImage $ANYKERNEL_T211/
-cp -r out/modules/* $ANYKERNEL_T211/modules/system/lib/modules/
+cp -r out/zImage $ANYKERNEL_T211/kernel/
+cp -r out/modules/* $ANYKERNEL_T211/system/lib/modules/
 
 cd $ANYKERNEL_T211; zip -r9 lt023g_Cainine-AnyKernel3.zip * -x .git README.md *placeholder
 echo 'done'
